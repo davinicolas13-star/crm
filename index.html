@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <link rel="manifest" href="manifest.json">
+
 <script>
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
@@ -414,82 +415,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
 </style>
 </head>
 <body>
-
-<!-- BLOQUEIO POR SENHA -->
-<div id="loginBox" style="
-  position: fixed;
-  inset: 0;
-  background: #000;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-  font-family: Arial, sans-serif;
-">
-
-  <div style="
-    background: #111;
-    padding: 30px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 320px;
-    text-align: center;
-    box-shadow: 0 0 20px rgba(0,0,0,.8);
-  ">
-
-    <h2 style="margin-bottom:15px;">?? Acesso Restrito</h2>
-
-    <input
-      type="password"
-      id="senhaInput"
-      placeholder="Digite a senha"
-      style="
-        width:100%;
-        padding:10px;
-        border-radius:8px;
-        border:none;
-        margin-bottom:15px;
-        font-size:16px;
-      "
-    >
-
-    <button
-      onclick="verificarSenha()"
-      style="
-        width:100%;
-        padding:10px;
-        border:none;
-        border-radius:8px;
-        background:#0a7cff;
-        color:#fff;
-        font-size:16px;
-        cursor:pointer;
-      "
-    >
-      Entrar
-    </button>
-
-    <p id="erroSenha" style="color:#ff5555; display:none; margin-top:10px;">
-      Senha incorreta
-    </p>
-
-  </div>
-</div>
-
-<script>
-  const SENHA_CORRETA = "@Fer32679"; // <<< MUDE AQUI
-
-  function verificarSenha() {
-    const digitada = document.getElementById("senhaInput").value;
-
-    if (digitada === SENHA_CORRETA) {
-      document.getElementById("loginBox").style.display = "none";
-    } else {
-      document.getElementById("erroSenha").style.display = "block";
-    }
-  }
-</script>
 
 <!-- ═══ AUTH SCREEN ═══ -->
 <div id="auth-screen">
@@ -2255,4 +2180,3 @@ updateStats(); renderList(); atualizarAgendaDot();
 </script>
 </body>
 </html>
-
