@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<link rel="manifest" href="manifest.json">
-
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -737,11 +730,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
   <div style="margin:0 12px 12px;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:14px">
     <div style="font-size:.73rem;color:var(--muted);margin-bottom:8px;font-weight:500">🔑 Chave da API Claude (Anthropic) — salva localmente</div>
     <div class="ai-key-row">
-      <input class="ai-key-input" type="password" id="ai-api-key" placeholder="sk-ant-…" oninput="salvarApiKey(this.value)">
-      <button class="btn btn-ghost btn-sm" onclick="toggleEye('ai-api-key',this)" style="flex-shrink:0">👁</button>
+      <input class="ai-key-input" type="text" id="ai-api-key" placeholder="sk-ant-api…" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" onchange="salvarApiKey(this.value)" onpaste="setTimeout(()=>salvarApiKey(this.value),50)">
+      <button class="btn btn-ghost btn-sm" id="btn-testar-key" onclick="testarChave()" style="flex-shrink:0;white-space:nowrap">🧪 Testar</button>
     </div>
-    <div style="font-size:.68rem;color:var(--muted);margin-top:7px;line-height:1.5">
-      Obtenha em <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a> · A chave fica apenas no seu dispositivo
+    <div id="key-status" style="font-size:.72rem;margin-top:6px;min-height:18px;line-height:1.4"></div>
+    <div style="font-size:.68rem;color:var(--muted);margin-top:5px;line-height:1.5">
+      Obtenha em <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a>
+      · Cole a chave e clique <strong style="color:var(--text)">Testar</strong> para confirmar que funciona
+      · A chave fica apenas no seu dispositivo
     </div>
   </div>
 
@@ -1702,11 +1698,77 @@ let capturaImagemType   = null;
 function initCaptura() {
   const saved = localStorage.getItem('crm_ai_key') || '';
   const inp = document.getElementById('ai-api-key');
-  if (inp && !inp.value) inp.value = saved;
+  if (inp) {
+    inp.value = saved;
+    if (saved) atualizarStatusKey(saved);
+  }
+}
+
+function limparChave(v) {
+  return v
+    .replace(/[\s\u00a0\u200b\u200c\u200d\ufeff\u2028\u2029]/g, '')
+    .replace(/[\u201c\u201d\u2018\u2019]/g, '')
+    .replace(/[\n\r\t]/g, '')
+    .trim();
 }
 
 function salvarApiKey(v) {
-  localStorage.setItem('crm_ai_key', v.trim());
+  const limpa = limparChave(v);
+  localStorage.setItem('crm_ai_key', limpa);
+  const inp = document.getElementById('ai-api-key');
+  if (inp && inp.value !== limpa) inp.value = limpa;
+  atualizarStatusKey(limpa);
+}
+
+function atualizarStatusKey(key) {
+  const el = document.getElementById('key-status');
+  if (!el) return;
+  if (!key) { el.textContent = ''; return; }
+  const valida = key.startsWith('sk-ant-') && key.length > 30;
+  if (valida) {
+    el.textContent = '\u2705 Chave salva \u2014 ' + key.slice(0,10) + '\u2026' + key.slice(-4) + ' (' + key.length + ' chars)';
+    el.style.color = 'var(--accent)';
+  } else {
+    el.textContent = '\u26a0\ufe0f Formato inválido \u2014 deve começar com "sk-ant-" (' + key.length + ' chars)';
+    el.style.color = 'var(--warn)';
+  }
+}
+
+async function testarChave() {
+  const apiKey = getApiKey();
+  if (!apiKey) return showToast('\u26a0\ufe0f Cole sua chave primeiro', 'warn');
+  const btn = document.getElementById('btn-testar-key');
+  const orig = btn.textContent;
+  btn.textContent = '\u23f3 Testando\u2026'; btn.disabled = true;
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 10,
+        messages: [{ role: 'user', content: 'ok' }]
+      })
+    });
+    const data = await resp.json();
+    if (resp.ok) {
+      showToast('\u2705 Chave válida! API funcionando.');
+      atualizarStatusKey(apiKey);
+    } else {
+      const msg = data?.error?.message || 'HTTP ' + resp.status;
+      showToast('\u274c Erro: ' + msg, 'warn');
+      const el = document.getElementById('key-status');
+      if (el) { el.textContent = '\u274c ' + msg; el.style.color = 'var(--red)'; }
+    }
+  } catch(e) {
+    showToast('\u274c Sem conexão com a API', 'warn');
+  }
+  btn.textContent = orig; btn.disabled = false;
 }
 
 function switchCapturaTab(tab, btn) {
@@ -1747,7 +1809,9 @@ function removerImagem() {
 }
 
 function getApiKey() {
-  return (document.getElementById('ai-api-key').value || localStorage.getItem('crm_ai_key') || '').trim();
+  const fromInput = document.getElementById('ai-api-key')?.value || '';
+  const fromStorage = localStorage.getItem('crm_ai_key') || '';
+  return limparChave(fromInput || fromStorage);
 }
 
 function showCapturaLoading(msg) {
@@ -1786,7 +1850,7 @@ async function extrairLeadsTexto() {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 2000,
         messages: [{
           role: 'user',
@@ -1825,7 +1889,7 @@ async function extrairLeadsImagem() {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-opus-4-6',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 2000,
         messages: [{
           role: 'user',
