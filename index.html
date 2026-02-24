@@ -8,6 +8,7 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js");
 }
 </script>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -120,8 +121,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
   background:rgba(17,24,39,.97);backdrop-filter:blur(16px);
   border-top:1px solid var(--border);
   display:flex;align-items:stretch;
+  overflow-x:auto;
   position:relative;z-index:50;
+  -webkit-overflow-scrolling:touch;
 }
+.bottom-nav::-webkit-scrollbar{display:none}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
   border:none;background:transparent;cursor:pointer;transition:all .2s;color:var(--muted);padding:6px 4px;
   font-family:'Syne',sans-serif;font-size:.58rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;}
@@ -200,7 +204,81 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
 .empty-icon{font-size:2.2rem;opacity:.3}
 .count-lbl{font-size:.72rem;color:var(--muted);margin-left:auto}
 
-/* ════ KANBAN ════ */
+/* ════ CAPTURA DE LEADS (IA) ════ */
+.captura-area{margin:12px;background:var(--surf);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.captura-tabs{display:flex;border-bottom:1px solid var(--border)}
+.ctab{flex:1;padding:12px;background:transparent;border:none;cursor:pointer;font-family:'Syne',sans-serif;font-weight:700;font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid transparent;transition:all .2s}
+.ctab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.captura-panel{padding:14px;display:none}
+.captura-panel.active{display:flex;flex-direction:column;gap:12px}
+.captura-textarea{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;resize:none;outline:none;min-height:130px;transition:border-color .2s;line-height:1.5}
+.captura-textarea:focus{border-color:var(--accent)}
+.captura-drop{border:2px dashed var(--border);border-radius:10px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;color:var(--muted);font-size:.82rem}
+.captura-drop.over,.captura-drop:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,229,160,.03)}
+.captura-img-preview{display:none;position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+.captura-img-preview img{width:100%;max-height:220px;object-fit:cover;display:block}
+.captura-img-preview .remove-img{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);border:none;border-radius:6px;color:#fff;cursor:pointer;padding:4px 8px;font-size:.75rem}
+.ai-hint{font-size:.73rem;color:var(--muted);background:var(--surf2);border-radius:8px;padding:9px 12px;line-height:1.5}
+.ai-hint b{color:var(--accent)}
+.ai-key-row{display:flex;gap:8px;align-items:center}
+.ai-key-input{flex:1;background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s;font-family:'DM Sans',sans-serif}
+.ai-key-input:focus{border-color:var(--accent)}
+/* Leads extraídos */
+.leads-extraidos{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+.lead-card-ext{background:var(--surf2);border:1px solid var(--border);border-radius:10px;padding:12px;animation:fadein .2s ease}
+.lead-card-ext-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.lead-card-ext-name{font-weight:600;font-size:.9rem}
+.lead-fields{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.lead-field{display:flex;flex-direction:column;gap:3px}
+.lead-field label{font-size:.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.lead-field input,.lead-field select{background:var(--surf);border:1px solid var(--border);border-radius:6px;padding:7px 9px;color:var(--text);font-size:14px;outline:none;width:100%}
+.lead-field input:focus,.lead-field select:focus{border-color:var(--accent)}
+.lead-full{grid-column:1/-1}
+.chk-lead{display:flex;align-items:center;gap:8px;cursor:pointer}
+.chk-lead input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+.ai-loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:20px;color:var(--muted);font-size:.85rem}
+.ai-spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-error-box{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:8px;padding:10px 13px;font-size:.79rem;color:var(--red);line-height:1.5}
+
+/* ════ AGENDA ════ */
+.agenda-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.agenda-filter{display:flex;gap:6px;overflow-x:auto;padding:10px 12px;border-bottom:1px solid var(--border)}
+.agenda-filter::-webkit-scrollbar{display:none}
+.af-pill{flex-shrink:0;padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:.72rem;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.af-pill.active{background:var(--accent);color:#0a0f1a;border-color:var(--accent)}
+.agenda-list{display:flex;flex-direction:column;gap:0}
+.agenda-day-group{margin:0}
+.agenda-day-lbl{padding:8px 14px;font-size:.7rem;font-family:'Syne',sans-serif;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;background:var(--surf2);border-bottom:1px solid var(--border);position:sticky;top:0}
+.agenda-item{padding:13px 14px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start;transition:background .12s;cursor:pointer}
+.agenda-item:active{background:var(--surf2)}
+.agenda-item.done .ai-title{text-decoration:line-through;opacity:.5}
+.agenda-item.done .ai-meta{opacity:.4}
+.ai-time{flex-shrink:0;text-align:center;padding-top:2px}
+.ai-time-h{font-family:'Syne',sans-serif;font-weight:800;font-size:.9rem;color:var(--accent);line-height:1}
+.ai-time-d{font-size:.65rem;color:var(--muted);margin-top:2px;white-space:nowrap}
+.ai-body{flex:1;min-width:0}
+.ai-title{font-weight:600;font-size:.88rem;margin-bottom:3px}
+.ai-meta{font-size:.73rem;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ai-type-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ai-actions{display:flex;gap:5px;flex-shrink:0;align-items:center}
+.agenda-badge{font-size:.63rem;padding:2px 6px;border-radius:10px;font-weight:600;white-space:nowrap}
+.ab-task{background:rgba(0,180,255,.12);color:var(--blue);border:1px solid rgba(0,180,255,.2)}
+.ab-evento{background:rgba(167,139,250,.12);color:#a78bfa;border:1px solid rgba(167,139,250,.2)}
+.ab-followup{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.2)}
+.ab-reuniao{background:rgba(0,229,160,.12);color:var(--accent);border:1px solid rgba(0,229,160,.2)}
+.done-btn{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.75rem;transition:all .15s;flex-shrink:0}
+.done-btn.done{background:var(--accent);border-color:var(--accent)}
+.done-btn:active{transform:scale(.9)}
+/* Agenda form modal */
+.agenda-form{padding:16px;display:flex;flex-direction:column;gap:12px}
+
+/* Overdue highlight */
+.agenda-item.overdue .ai-time-h{color:var(--red)}
+.agenda-item.overdue .ai-time-d{color:var(--red);opacity:.8}
+
+/* Notification dot on nav */
+.nav-dot{position:absolute;top:6px;right:calc(50% - 14px);width:7px;height:7px;background:var(--red);border-radius:50%;border:1px solid var(--bg)}
 .stage-selector{display:flex;gap:8px;overflow-x:auto;padding:12px 16px;border-bottom:1px solid var(--border)}
 .stage-selector::-webkit-scrollbar{display:none}
 .stage-pill{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;white-space:nowrap}
@@ -414,6 +492,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
     }
   }
 </script>
+
 <!-- ═══ AUTH SCREEN ═══ -->
 <div id="auth-screen">
   <div class="auth-box">
@@ -540,6 +619,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
   </button>
   <button class="dnav-btn" data-tab="backup" onclick="switchTab('backup',this)">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>Backup
+  </button>
+  <button class="dnav-btn" data-tab="captura" onclick="switchTab('captura',this)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Capturar Leads
+  </button>
+  <button class="dnav-btn" data-tab="agenda" onclick="switchTab('agenda',this)">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Agenda
   </button>
 </nav>
 
@@ -718,6 +803,97 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
   </div>
 </div>
 
+<!-- CAPTURA DE LEADS -->
+<div class="page" id="page-captura">
+  <div class="p-wrap" style="padding-bottom:8px">
+    <div class="section-title">🤖 Capturar Leads</div>
+    <div class="section-sub">Cole uma mensagem do WhatsApp ou envie um print — a IA extrai os leads automaticamente</div>
+  </div>
+
+  <!-- Chave API -->
+  <div style="margin:0 12px 12px;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:14px">
+    <div style="font-size:.73rem;color:var(--muted);margin-bottom:8px;font-weight:500">🔑 Chave da API Claude (Anthropic) — salva localmente</div>
+    <div class="ai-key-row">
+      <input class="ai-key-input" type="password" id="ai-api-key" placeholder="sk-ant-…" oninput="salvarApiKey(this.value)">
+      <button class="btn btn-ghost btn-sm" onclick="toggleEye('ai-api-key',this)" style="flex-shrink:0">👁</button>
+    </div>
+    <div style="font-size:.68rem;color:var(--muted);margin-top:7px;line-height:1.5">
+      Obtenha em <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a> · A chave fica apenas no seu dispositivo
+    </div>
+  </div>
+
+  <div class="captura-area">
+    <div class="captura-tabs">
+      <button class="ctab active" onclick="switchCapturaTab('texto',this)">💬 Colar Texto</button>
+      <button class="ctab" onclick="switchCapturaTab('imagem',this)">📸 Enviar Print</button>
+    </div>
+
+    <!-- TEXTO -->
+    <div class="captura-panel active" id="cpanel-texto">
+      <div class="ai-hint">
+        <b>Como usar:</b> Copie a mensagem do WhatsApp onde o lead mandou os dados (nome, telefone, interesse) e cole aqui. Pode ser uma conversa com vários leads de uma vez.
+      </div>
+      <textarea class="captura-textarea" id="captura-texto" placeholder="Ex: Oi, me chamo João Silva, interesse em plano premium, tel 11 99999-8888&#10;&#10;Maria Souza - maria@email.com - quer contratar plano básico&#10;&#10;Pedro - 21 98888-7777 - orçamento urgente"></textarea>
+      <button class="btn btn-primary" onclick="extrairLeadsTexto()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Extrair Leads com IA
+      </button>
+    </div>
+
+    <!-- IMAGEM -->
+    <div class="captura-panel" id="cpanel-imagem">
+      <div class="ai-hint">
+        <b>Como usar:</b> Tire um print da conversa do WhatsApp e envie aqui. A IA lê o texto da imagem e extrai os leads automaticamente.
+      </div>
+      <div class="captura-drop" id="img-drop"
+        ondragover="event.preventDefault();this.classList.add('over')"
+        ondragleave="this.classList.remove('over')"
+        ondrop="handleImgDrop(event)"
+        onclick="document.getElementById('img-file-input').click()">
+        <div style="font-size:2rem;margin-bottom:8px">📸</div>
+        <div style="font-weight:600;margin-bottom:4px">Toque para selecionar o print</div>
+        <div style="font-size:.72rem">ou arraste a imagem aqui · JPG, PNG, WEBP</div>
+      </div>
+      <div class="captura-img-preview" id="img-preview">
+        <img id="img-preview-src" src="" alt="preview">
+        <button class="remove-img" onclick="removerImagem()">✕ Remover</button>
+      </div>
+      <input type="file" id="img-file-input" accept="image/*" style="display:none" onchange="carregarImagem(this)">
+      <button class="btn btn-primary" id="btn-extrair-img" onclick="extrairLeadsImagem()" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Analisar Print com IA
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="captura-resultado" style="margin:12px"></div>
+</div>
+
+<!-- AGENDA -->
+<div class="page" id="page-agenda">
+  <div class="agenda-header">
+    <div>
+      <div class="section-title" style="margin-bottom:0">📅 Agenda</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:2px" id="agenda-count-lbl">0 eventos</div>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="abrirAgendaModal()">+ Novo Evento</button>
+  </div>
+  <div class="agenda-filter">
+    <button class="af-pill active" onclick="filtrarAgenda('todos',this)">Todos</button>
+    <button class="af-pill" onclick="filtrarAgenda('hoje',this)">Hoje</button>
+    <button class="af-pill" onclick="filtrarAgenda('semana',this)">Esta semana</button>
+    <button class="af-pill" onclick="filtrarAgenda('task',this)">Tarefas</button>
+    <button class="af-pill" onclick="filtrarAgenda('evento',this)">Eventos</button>
+    <button class="af-pill" onclick="filtrarAgenda('followup',this)">Follow-ups</button>
+    <button class="af-pill" onclick="filtrarAgenda('reuniao',this)">Reuniões</button>
+    <button class="af-pill" onclick="filtrarAgenda('pendentes',this)">Pendentes</button>
+  </div>
+  <div id="agenda-list">
+    <div class="empty-state"><div class="empty-icon">📅</div><div>Nenhum evento</div><div style="font-size:.75rem">Toque em "+ Novo Evento" para adicionar</div></div>
+  </div>
+</div>
+
 </div><!-- end app-body -->
 
 <!-- ═══ BOTTOM NAV ═══ -->
@@ -737,6 +913,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
   <button class="nav-item" id="nav-backup" data-tab="backup" onclick="switchTab('backup',this)">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
     Backup
+  </button>
+  <button class="nav-item" id="nav-captura" data-tab="captura" onclick="switchTab('captura',this)" style="position:relative">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    Capturar
+  </button>
+  <button class="nav-item" id="nav-agenda" data-tab="agenda" onclick="switchTab('agenda',this)" style="position:relative">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Agenda
+    <span class="nav-dot" id="agenda-nav-dot" style="display:none"></span>
   </button>
 </nav>
 
@@ -823,6 +1008,66 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
   </div>
 </div>
 
+<!-- ═══ AGENDA MODAL ═══ -->
+<div class="modal-overlay" id="agenda-modal" onclick="if(event.target===this)fecharAgendaModal()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="agenda-modal-title">Novo Evento</div>
+      <button class="modal-close" onclick="fecharAgendaModal()">✕</button>
+    </div>
+    <div class="agenda-form">
+      <div class="field">
+        <label>Título *</label>
+        <input type="text" id="ev-titulo" placeholder="Ex: Ligar para confirmar proposta">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Tipo</label>
+          <select id="ev-tipo">
+            <option value="task">✅ Tarefa</option>
+            <option value="followup">📞 Follow-up</option>
+            <option value="reuniao">🤝 Reunião</option>
+            <option value="evento">📌 Evento</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Cliente</label>
+          <select id="ev-cliente">
+            <option value="">— Nenhum —</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Data *</label>
+          <input type="date" id="ev-data">
+        </div>
+        <div class="field">
+          <label>Hora</label>
+          <input type="time" id="ev-hora" placeholder="HH:MM">
+        </div>
+      </div>
+      <div class="field">
+        <label>Descrição / Anotações</label>
+        <textarea id="ev-desc" rows="3" placeholder="Detalhes do evento…" style="resize:vertical"></textarea>
+      </div>
+      <div class="field">
+        <label>Lembrete</label>
+        <select id="ev-lembrete">
+          <option value="">Sem lembrete</option>
+          <option value="0">Na hora</option>
+          <option value="15">15 min antes</option>
+          <option value="30">30 min antes</option>
+          <option value="60">1 hora antes</option>
+          <option value="1440">1 dia antes</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="salvarEvento()">✦ Salvar Evento</button>
+      <button class="btn btn-danger" id="btn-del-evento" style="display:none" onclick="deletarEventoAtual()">🗑 Excluir evento</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -879,6 +1124,8 @@ function switchTab(tab, btn) {
   if(tab==='funil')     renderFunil();
   if(tab==='relatorio') renderRelatorio();
   if(tab==='backup')    renderBackupPage();
+  if(tab==='agenda')    renderAgenda();
+  if(tab==='captura')   initCaptura();
   // scroll to top
   document.getElementById('page-'+tab).scrollTop = 0;
 }
@@ -992,6 +1239,7 @@ function renderList() {
       </div>
       <div class="ci-actions">
         <a class="icon-btn wa-ibtn" href="${c.waLink}" target="_blank">${waIco('#25d366',14)}</a>
+        <button class="icon-btn" onclick="abrirAgendaModal(null,'${c.id}')" title="Adicionar à agenda" style="font-size:.85rem">📅</button>
         <button class="icon-btn" onclick="abrirFormModal('${c.id}')">✏️</button>
         <button class="icon-btn" onclick="deletarCliente('${c.id}')" style="color:var(--red)">🗑</button>
       </div>
@@ -1052,6 +1300,7 @@ function renderKanban() {
             ${c.valor>0?`<div class="k-val">💰 ${fmtR(c.valor)}</div>`:''}
             <div class="k-btns">
               <a class="k-btn k-wa-btn" href="${c.waLink}" target="_blank">${waIco('#25d366',10)} WA</a>
+              <button class="k-btn" onclick="abrirAgendaModal(null,'${c.id}')">📅</button>
               <button class="k-btn" onclick="abrirFormModal('${c.id}')">✏️</button>
               <button class="k-btn" onclick="deletarCliente('${c.id}')" style="color:var(--red);flex:0;padding:5px 7px">✕</button>
             </div>
@@ -1291,6 +1540,528 @@ function showToast(msg,type='ok'){
 })();
 
 /* ═══════════════════════════════════
+   AGENDA
+═══════════════════════════════════ */
+let eventos = JSON.parse(localStorage.getItem('crm_agenda') || '[]');
+let editandoEventoId = null;
+let agendaFiltro = 'todos';
+
+const TIPO_LABEL  = {task:'Tarefa', followup:'Follow-up', reuniao:'Reunião', evento:'Evento'};
+const TIPO_CLASS  = {task:'ab-task', followup:'ab-followup', reuniao:'ab-reuniao', evento:'ab-evento'};
+const TIPO_EMOJI  = {task:'✅', followup:'📞', reuniao:'🤝', evento:'📌'};
+const TIPO_COLOR  = {task:'#00b4ff', followup:'#f59e0b', reuniao:'#00e5a0', evento:'#a78bfa'};
+
+function persistAgenda() {
+  localStorage.setItem('crm_agenda', JSON.stringify(eventos));
+  atualizarAgendaDot();
+}
+
+function atualizarAgendaDot() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const amanha = new Date(hoje); amanha.setDate(amanha.getDate()+1);
+  const urgentes = eventos.filter(e => {
+    if (e.done) return false;
+    const d = new Date(e.data+'T00:00:00');
+    return d <= amanha;
+  });
+  const dot = document.getElementById('agenda-nav-dot');
+  if (dot) dot.style.display = urgentes.length ? 'block' : 'none';
+}
+
+function abrirAgendaModal(id, preClienteId) {
+  editandoEventoId = id || null;
+  const sel = document.getElementById('ev-cliente');
+  sel.innerHTML = '<option value="">— Nenhum —</option>' +
+    [...clientes].sort((a,b)=>a.nome.localeCompare(b.nome))
+      .map(c=>`<option value="${c.id}">${c.nome}${c.empresa?' ('+c.empresa+')':''}</option>`).join('');
+
+  const today = new Date().toISOString().slice(0,10);
+
+  if (id) {
+    const ev = eventos.find(e=>e.id===id);
+    if (!ev) return;
+    document.getElementById('ev-titulo').value   = ev.titulo;
+    document.getElementById('ev-tipo').value     = ev.tipo;
+    document.getElementById('ev-cliente').value  = ev.clienteId || '';
+    document.getElementById('ev-data').value     = ev.data;
+    document.getElementById('ev-hora').value     = ev.hora || '';
+    document.getElementById('ev-desc').value     = ev.desc || '';
+    document.getElementById('ev-lembrete').value = ev.lembrete || '';
+    document.getElementById('agenda-modal-title').textContent = 'Editar Evento';
+    document.getElementById('btn-del-evento').style.display = 'flex';
+  } else {
+    document.getElementById('ev-titulo').value   = '';
+    document.getElementById('ev-tipo').value     = 'task';
+    document.getElementById('ev-cliente').value  = preClienteId || '';
+    document.getElementById('ev-data').value     = today;
+    document.getElementById('ev-hora').value     = '';
+    document.getElementById('ev-desc').value     = '';
+    document.getElementById('ev-lembrete').value = '';
+    document.getElementById('agenda-modal-title').textContent = 'Novo Evento';
+    document.getElementById('btn-del-evento').style.display = 'none';
+  }
+  document.getElementById('agenda-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('ev-titulo').focus(), 300);
+}
+
+function fecharAgendaModal() {
+  document.getElementById('agenda-modal').classList.remove('open');
+  editandoEventoId = null;
+}
+
+function salvarEvento() {
+  const titulo = document.getElementById('ev-titulo').value.trim();
+  const tipo   = document.getElementById('ev-tipo').value;
+  const cid    = document.getElementById('ev-cliente').value;
+  const data   = document.getElementById('ev-data').value;
+  const hora   = document.getElementById('ev-hora').value;
+  const desc   = document.getElementById('ev-desc').value.trim();
+  const lembrete = document.getElementById('ev-lembrete').value;
+
+  if (!titulo) return showToast('⚠️ Informe o título','warn');
+  if (!data)   return showToast('⚠️ Informe a data','warn');
+
+  if (editandoEventoId) {
+    const idx = eventos.findIndex(e=>e.id===editandoEventoId);
+    if (idx>=0) eventos[idx] = {...eventos[idx], titulo, tipo, clienteId:cid, data, hora, desc, lembrete, updatedAt:new Date().toISOString()};
+    showToast('✅ Evento atualizado!');
+  } else {
+    eventos.push({id:uid(), titulo, tipo, clienteId:cid, data, hora, desc, lembrete, done:false, createdAt:new Date().toISOString()});
+    showToast('📅 Evento adicionado!');
+  }
+
+  persistAgenda();
+  fecharAgendaModal();
+  renderAgenda();
+
+  // Schedule notification if lembrete set
+  if (lembrete !== '' && hora) {
+    agendarNotificacao(titulo, data, hora, parseInt(lembrete));
+  }
+}
+
+function deletarEventoAtual() {
+  if (!confirm('Excluir este evento?')) return;
+  eventos = eventos.filter(e=>e.id!==editandoEventoId);
+  persistAgenda();
+  fecharAgendaModal();
+  renderAgenda();
+  showToast('🗑 Evento removido');
+}
+
+function toggleDone(id) {
+  const ev = eventos.find(e=>e.id===id);
+  if (!ev) return;
+  ev.done = !ev.done;
+  ev.updatedAt = new Date().toISOString();
+  persistAgenda();
+  renderAgenda();
+  if (ev.done) showToast('✅ Concluído!');
+}
+
+function filtrarAgenda(tipo, btn) {
+  agendaFiltro = tipo;
+  document.querySelectorAll('.af-pill').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderAgenda();
+}
+
+function renderAgenda() {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const fimSemana = new Date(hoje); fimSemana.setDate(fimSemana.getDate()+7);
+
+  let lista = [...eventos];
+
+  // Filter
+  if (agendaFiltro === 'hoje') {
+    lista = lista.filter(e => e.data === hoje.toISOString().slice(0,10));
+  } else if (agendaFiltro === 'semana') {
+    lista = lista.filter(e => {
+      const d = new Date(e.data+'T00:00:00');
+      return d >= hoje && d <= fimSemana;
+    });
+  } else if (agendaFiltro === 'pendentes') {
+    lista = lista.filter(e => !e.done);
+  } else if (['task','followup','reuniao','evento'].includes(agendaFiltro)) {
+    lista = lista.filter(e => e.tipo === agendaFiltro);
+  }
+
+  // Sort: pending first by date, then done
+  lista.sort((a,b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    const da = new Date((a.data||'9999-12-31')+'T'+(a.hora||'00:00'));
+    const db = new Date((b.data||'9999-12-31')+'T'+(b.hora||'00:00'));
+    return da - db;
+  });
+
+  const container = document.getElementById('agenda-list');
+  document.getElementById('agenda-count-lbl').textContent = `${lista.length} evento${lista.length!==1?'s':''}`;
+
+  if (!lista.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><div>Nenhum evento</div><div style="font-size:.75rem">Toque em "+ Novo Evento"</div></div>`;
+    return;
+  }
+
+  // Group by date
+  const groups = {};
+  lista.forEach(ev => {
+    const key = ev.data || '9999-12-31';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(ev);
+  });
+
+  const fmtDayLbl = dateStr => {
+    const d = new Date(dateStr+'T12:00:00');
+    const hj = new Date(); hj.setHours(0,0,0,0);
+    const am = new Date(hj); am.setDate(am.getDate()+1);
+    const ontem = new Date(hj); ontem.setDate(ontem.getDate()-1);
+    if (d.toDateString()===hj.toDateString())   return '📍 Hoje — '+d.toLocaleDateString('pt-BR',{weekday:'long'});
+    if (d.toDateString()===am.toDateString())   return '⏰ Amanhã — '+d.toLocaleDateString('pt-BR',{weekday:'long'});
+    if (d.toDateString()===ontem.toDateString()) return '↩ Ontem — '+d.toLocaleDateString('pt-BR',{weekday:'long'});
+    return d.toLocaleDateString('pt-BR',{weekday:'long', day:'numeric', month:'long'});
+  };
+
+  const isOverdue = dateStr => {
+    const d = new Date(dateStr+'T23:59:59');
+    return d < new Date();
+  };
+
+  container.innerHTML = Object.entries(groups).map(([date, evs]) => `
+    <div class="agenda-day-group">
+      <div class="agenda-day-lbl">${fmtDayLbl(date)}</div>
+      ${evs.map(ev => {
+        const cliente = ev.clienteId ? clientes.find(c=>c.id===ev.clienteId) : null;
+        const overdue = !ev.done && isOverdue(ev.data);
+        return `<div class="agenda-item${ev.done?' done':''}${overdue?' overdue':''}" onclick="abrirAgendaModal('${ev.id}')">
+          <div class="ai-time">
+            <div class="ai-time-h">${ev.hora||'—'}</div>
+            <div class="ai-time-d">${TIPO_EMOJI[ev.tipo]||'📌'}</div>
+          </div>
+          <div class="ai-body">
+            <div class="ai-title">${ev.titulo}</div>
+            <div class="ai-meta">
+              <span class="agenda-badge ${TIPO_CLASS[ev.tipo]||'ab-evento'}">${TIPO_LABEL[ev.tipo]||ev.tipo}</span>
+              ${cliente ? `<span style="color:var(--accent);font-size:.7rem">👤 ${cliente.nome}</span>` : ''}
+              ${ev.desc ? `<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px">${ev.desc}</span>` : ''}
+            </div>
+          </div>
+          <div class="ai-actions" onclick="event.stopPropagation()">
+            <button class="done-btn${ev.done?' done':''}" onclick="toggleDone('${ev.id}')" title="${ev.done?'Reabrir':'Concluir'}">
+              ${ev.done ? '✓' : ''}
+            </button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+function agendarNotificacao(titulo, data, hora, minAntes) {
+  if (!('Notification' in window)) return;
+  Notification.requestPermission().then(perm => {
+    if (perm !== 'granted') return;
+    const dt = new Date(`${data}T${hora}`);
+    dt.setMinutes(dt.getMinutes() - minAntes);
+    const diff = dt - Date.now();
+    if (diff > 0 && diff < 7 * 24 * 60 * 60 * 1000) {
+      setTimeout(() => {
+        new Notification('📅 CRM Pro — Lembrete', { body: titulo, icon: '/favicon.ico' });
+      }, diff);
+    }
+  });
+}
+
+/* ═══════════════════════════════════
+   CAPTURA DE LEADS COM IA
+═══════════════════════════════════ */
+let capturaImagemBase64 = null;
+let capturaImagemType   = null;
+
+function initCaptura() {
+  const saved = localStorage.getItem('crm_ai_key') || '';
+  const inp = document.getElementById('ai-api-key');
+  if (inp && !inp.value) inp.value = saved;
+}
+
+function salvarApiKey(v) {
+  localStorage.setItem('crm_ai_key', v.trim());
+}
+
+function switchCapturaTab(tab, btn) {
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.captura-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('cpanel-'+tab).classList.add('active');
+}
+
+function carregarImagem(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    capturaImagemBase64 = e.target.result.split(',')[1];
+    capturaImagemType   = file.type;
+    document.getElementById('img-preview-src').src = e.target.result;
+    document.getElementById('img-preview').style.display = 'block';
+    document.getElementById('img-drop').style.display = 'none';
+    document.getElementById('btn-extrair-img').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('img-drop').classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.type.startsWith('image/')) return showToast('⚠️ Envie uma imagem','warn');
+  carregarImagem({files:[file]});
+}
+
+function removerImagem() {
+  capturaImagemBase64 = null; capturaImagemType = null;
+  document.getElementById('img-preview').style.display = 'none';
+  document.getElementById('img-drop').style.display = 'block';
+  document.getElementById('btn-extrair-img').disabled = true;
+  document.getElementById('img-file-input').value = '';
+}
+
+function getApiKey() {
+  return (document.getElementById('ai-api-key').value || localStorage.getItem('crm_ai_key') || '').trim();
+}
+
+function showCapturaLoading(msg) {
+  document.getElementById('captura-resultado').innerHTML = `
+    <div class="ai-loading"><div class="ai-spinner"></div>${msg}</div>`;
+}
+
+function showCapturaError(msg) {
+  document.getElementById('captura-resultado').innerHTML = `
+    <div class="ai-error-box">⚠️ ${msg}</div>`;
+}
+
+const PROMPT_LEADS = `Você é um assistente de CRM. Analise o texto/imagem abaixo e extraia TODOS os leads/contatos mencionados.
+Para cada lead, retorne um JSON array com objetos no formato:
+{"nome":"","whatsapp":"","email":"","empresa":"","interesse":"","obs":""}
+- whatsapp: apenas dígitos, com DDI (55 para Brasil) + DDD + número. Se não tiver, deixe vazio.
+- interesse: resumo curto do que a pessoa quer/precisa
+- Se um campo não estiver disponível, deixe como string vazia.
+Retorne APENAS o JSON array, sem markdown, sem explicações.`;
+
+async function extrairLeadsTexto() {
+  const apiKey = getApiKey();
+  if (!apiKey) return showCapturaError('Configure a chave da API Claude acima antes de continuar.');
+  const texto = document.getElementById('captura-texto').value.trim();
+  if (!texto)  return showToast('⚠️ Cole o texto antes','warn');
+
+  showCapturaLoading('Analisando mensagem…');
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':    'application/json',
+        'x-api-key':       apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-6',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: PROMPT_LEADS + '\n\nTexto:\n' + texto
+        }]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(()=>({}));
+      return showCapturaError(`Erro da API: ${err.error?.message || resp.status}`);
+    }
+
+    const data = await resp.json();
+    const raw  = data.content?.[0]?.text || '';
+    processarResultadoIA(raw);
+  } catch(e) {
+    showCapturaError('Falha na conexão com a API. Verifique sua chave e conexão.');
+  }
+}
+
+async function extrairLeadsImagem() {
+  const apiKey = getApiKey();
+  if (!apiKey)              return showCapturaError('Configure a chave da API Claude acima.');
+  if (!capturaImagemBase64) return showToast('⚠️ Selecione uma imagem','warn');
+
+  showCapturaLoading('Analisando print do WhatsApp…');
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type':    'application/json',
+        'x-api-key':       apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-6',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type:'image', source:{ type:'base64', media_type: capturaImagemType, data: capturaImagemBase64 } },
+            { type:'text',  text: PROMPT_LEADS }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(()=>({}));
+      return showCapturaError(`Erro da API: ${err.error?.message || resp.status}`);
+    }
+
+    const data = await resp.json();
+    const raw  = data.content?.[0]?.text || '';
+    processarResultadoIA(raw);
+  } catch(e) {
+    showCapturaError('Falha na conexão com a API.');
+  }
+}
+
+function processarResultadoIA(raw) {
+  let leads = [];
+  try {
+    const clean = raw.replace(/```json|```/g,'').trim();
+    leads = JSON.parse(clean);
+    if (!Array.isArray(leads)) leads = [leads];
+  } catch {
+    return showCapturaError('A IA não retornou um formato válido. Tente novamente ou reformule o texto.');
+  }
+
+  if (!leads.length) {
+    document.getElementById('captura-resultado').innerHTML = `
+      <div class="ai-error-box" style="background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3);color:#f59e0b">
+        ⚠️ Nenhum lead identificado. Tente com um texto mais detalhado.
+      </div>`;
+    return;
+  }
+
+  // Render review cards
+  const html = `
+    <div style="margin-bottom:10px">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;margin-bottom:4px">
+        🎉 ${leads.length} lead${leads.length!==1?'s':''} encontrado${leads.length!==1?'s':''}
+      </div>
+      <div style="font-size:.75rem;color:var(--muted)">Revise os dados e clique em "Importar Selecionados"</div>
+    </div>
+    <div class="leads-extraidos" id="leads-cards">
+      ${leads.map((l,i) => renderLeadCard(l,i)).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary" onclick="importarLeadsSelecionados()" style="flex:2">✦ Importar Selecionados</button>
+      <button class="btn btn-ghost" onclick="selecionarTodosLeads()" style="flex:1;font-size:.8rem">Todos</button>
+    </div>`;
+
+  document.getElementById('captura-resultado').innerHTML = html;
+  // store leads in memory for import
+  window._leadsExtraidos = leads;
+}
+
+function renderLeadCard(l, i) {
+  return `<div class="lead-card-ext" id="lead-card-${i}">
+    <div class="lead-card-ext-hdr">
+      <label class="chk-lead">
+        <input type="checkbox" id="chk-lead-${i}" checked>
+        <span class="lead-card-ext-name">${l.nome||'Lead '+(i+1)}</span>
+      </label>
+    </div>
+    <div class="lead-fields">
+      <div class="lead-field">
+        <label>Nome</label>
+        <input type="text" id="lf-nome-${i}" value="${escHtml(l.nome||'')}">
+      </div>
+      <div class="lead-field">
+        <label>WhatsApp</label>
+        <input type="tel" id="lf-wa-${i}" value="${escHtml(l.whatsapp||'')}">
+      </div>
+      <div class="lead-field">
+        <label>E-mail</label>
+        <input type="email" id="lf-email-${i}" value="${escHtml(l.email||'')}">
+      </div>
+      <div class="lead-field">
+        <label>Empresa</label>
+        <input type="text" id="lf-empresa-${i}" value="${escHtml(l.empresa||'')}">
+      </div>
+      <div class="lead-field lead-full">
+        <label>Interesse / Observações</label>
+        <input type="text" id="lf-obs-${i}" value="${escHtml((l.interesse||'')+(l.obs?' — '+l.obs:''))}">
+      </div>
+    </div>
+  </div>`;
+}
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function selecionarTodosLeads() {
+  const leads = window._leadsExtraidos || [];
+  leads.forEach((_,i) => {
+    const chk = document.getElementById('chk-lead-'+i);
+    if (chk) chk.checked = true;
+  });
+}
+
+function importarLeadsSelecionados() {
+  const leads = window._leadsExtraidos || [];
+  let importados = 0, duplicados = 0;
+
+  leads.forEach((_, i) => {
+    const chk = document.getElementById('chk-lead-'+i);
+    if (!chk || !chk.checked) return;
+
+    const nome     = document.getElementById('lf-nome-'+i).value.trim();
+    const whatsapp = document.getElementById('lf-wa-'+i).value.trim();
+    const email    = document.getElementById('lf-email-'+i).value.trim();
+    const empresa  = document.getElementById('lf-empresa-'+i).value.trim();
+    const obs      = document.getElementById('lf-obs-'+i).value.trim();
+
+    if (!nome) return;
+
+    // Check duplicate by WA or name
+    const waClean = whatsapp.replace(/\D/g,'');
+    const isDup = clientes.some(c =>
+      (waClean && c.whatsapp.replace(/\D/g,'')===waClean) ||
+      c.nome.toLowerCase()===nome.toLowerCase()
+    );
+    if (isDup) { duplicados++; return; }
+
+    clientes.unshift({
+      id: uid(), nome, whatsapp: waClean||'00000000000', email, empresa, obs,
+      status: 'lead', valor: 0,
+      waLink: waClean ? waL(waClean) : '#',
+      createdAt: new Date().toISOString()
+    });
+    importados++;
+  });
+
+  persist();
+  renderList();
+
+  let msg = `✅ ${importados} lead${importados!==1?'s':''} importado${importados!==1?'s':''}!`;
+  if (duplicados) msg += ` (${duplicados} duplicado${duplicados!==1?'s':''} ignorado${duplicados!==1?'s':''})`;
+  showToast(msg);
+
+  if (importados > 0) {
+    document.getElementById('captura-resultado').innerHTML = `
+      <div style="background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.25);border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:1.5rem;margin-bottom:6px">🎉</div>
+        <div style="font-family:'Syne',sans-serif;font-weight:700">${importados} lead${importados!==1?'s':''} adicionado${importados!==1?'s':''} ao CRM!</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Acesse a aba Clientes para ver</div>
+        <button class="btn btn-primary" onclick="switchTab('clientes',document.getElementById('nav-clientes'))" style="margin-top:12px">Ver Clientes →</button>
+      </div>`;
+    window._leadsExtraidos = [];
+  }
+}
+
+/* ═══════════════════════════════════
    AUTH SYSTEM
 ═══════════════════════════════════ */
 const AUTH_KEY   = 'crm_pwd_hash';
@@ -1482,7 +2253,7 @@ function fazerLogout() {
 })();
 
 /* ═══ INIT ═══ */
-updateStats();renderList();
+updateStats(); renderList(); atualizarAgendaDot();
 </script>
 </body>
 </html>
