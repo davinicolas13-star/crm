@@ -726,18 +726,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
     <div class="section-sub">Cole uma mensagem do WhatsApp ou envie um print — a IA extrai os leads automaticamente</div>
   </div>
 
-  <!-- Chave API -->
+  <!-- Chave API Gemini -->
   <div style="margin:0 12px 12px;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:14px">
-    <div style="font-size:.73rem;color:var(--muted);margin-bottom:8px;font-weight:500">🔑 Chave da API Claude (Anthropic) — salva localmente</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z" fill="#4285f4"/></svg>
+      <span style="font-size:.8rem;font-weight:600;color:var(--text)">Google Gemini — Grátis, sem cartão</span>
+    </div>
     <div class="ai-key-row">
-      <input class="ai-key-input" type="text" id="ai-api-key" placeholder="sk-ant-api…" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" onchange="salvarApiKey(this.value)" onpaste="setTimeout(()=>salvarApiKey(this.value),50)">
+      <input class="ai-key-input" type="text" id="ai-api-key" placeholder="AIza…" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" onchange="salvarApiKey(this.value)" onpaste="setTimeout(()=>salvarApiKey(this.value),50)">
       <button class="btn btn-ghost btn-sm" id="btn-testar-key" onclick="testarChave()" style="flex-shrink:0;white-space:nowrap">🧪 Testar</button>
     </div>
     <div id="key-status" style="font-size:.72rem;margin-top:6px;min-height:18px;line-height:1.4"></div>
-    <div style="font-size:.68rem;color:var(--muted);margin-top:5px;line-height:1.5">
-      Obtenha em <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a>
-      · Cole a chave e clique <strong style="color:var(--text)">Testar</strong> para confirmar que funciona
-      · A chave fica apenas no seu dispositivo
+    <div style="font-size:.68rem;color:var(--muted);margin-top:6px;line-height:1.6;background:rgba(66,133,244,.06);border:1px solid rgba(66,133,244,.15);border-radius:8px;padding:8px 10px">
+      <strong style="color:#4285f4">Como obter sua chave grátis:</strong><br>
+      1. Acesse <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent)">aistudio.google.com/app/apikey</a><br>
+      2. Clique em <strong style="color:var(--text)">"Create API key"</strong><br>
+      3. Copie e cole aqui · Fica salva só no seu dispositivo
     </div>
   </div>
 
@@ -1724,49 +1728,42 @@ function atualizarStatusKey(key) {
   const el = document.getElementById('key-status');
   if (!el) return;
   if (!key) { el.textContent = ''; return; }
-  const valida = key.startsWith('sk-ant-') && key.length > 30;
+  // Gemini keys start with "AIza"
+  const valida = key.startsWith('AIza') && key.length > 20;
   if (valida) {
-    el.textContent = '\u2705 Chave salva \u2014 ' + key.slice(0,10) + '\u2026' + key.slice(-4) + ' (' + key.length + ' chars)';
+    el.textContent = '✅ Chave Gemini salva — ' + key.slice(0,8) + '…' + key.slice(-4) + ' (' + key.length + ' chars)';
     el.style.color = 'var(--accent)';
-  } else {
-    el.textContent = '\u26a0\ufe0f Formato inválido \u2014 deve começar com "sk-ant-" (' + key.length + ' chars)';
+  } else if (key.length > 0) {
+    el.textContent = '⚠️ Formato inválido — chave Gemini começa com "AIza" (' + key.length + ' chars)';
     el.style.color = 'var(--warn)';
   }
 }
 
 async function testarChave() {
   const apiKey = getApiKey();
-  if (!apiKey) return showToast('\u26a0\ufe0f Cole sua chave primeiro', 'warn');
+  if (!apiKey) return showToast('⚠️ Cole sua chave primeiro', 'warn');
   const btn = document.getElementById('btn-testar-key');
   const orig = btn.textContent;
-  btn.textContent = '\u23f3 Testando\u2026'; btn.disabled = true;
+  btn.textContent = '⏳ Testando…'; btn.disabled = true;
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const resp = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 10,
-        messages: [{ role: 'user', content: 'ok' }]
-      })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: 'ok' }] }] })
     });
     const data = await resp.json();
-    if (resp.ok) {
-      showToast('\u2705 Chave válida! API funcionando.');
+    if (resp.ok && data.candidates) {
+      showToast('✅ Chave Gemini válida! API funcionando.');
       atualizarStatusKey(apiKey);
     } else {
       const msg = data?.error?.message || 'HTTP ' + resp.status;
-      showToast('\u274c Erro: ' + msg, 'warn');
+      showToast('❌ Erro: ' + msg, 'warn');
       const el = document.getElementById('key-status');
-      if (el) { el.textContent = '\u274c ' + msg; el.style.color = 'var(--red)'; }
+      if (el) { el.textContent = '❌ ' + msg; el.style.color = 'var(--red)'; }
     }
   } catch(e) {
-    showToast('\u274c Sem conexão com a API', 'warn');
+    showToast('❌ Sem conexão com a API', 'warn');
   }
   btn.textContent = orig; btn.disabled = false;
 }
@@ -1815,113 +1812,86 @@ function getApiKey() {
 }
 
 function showCapturaLoading(msg) {
-  document.getElementById('captura-resultado').innerHTML = `
-    <div class="ai-loading"><div class="ai-spinner"></div>${msg}</div>`;
+  document.getElementById('captura-resultado').innerHTML =
+    `<div class="ai-loading"><div class="ai-spinner"></div>${msg}</div>`;
 }
 
 function showCapturaError(msg) {
-  document.getElementById('captura-resultado').innerHTML = `
-    <div class="ai-error-box">⚠️ ${msg}</div>`;
+  document.getElementById('captura-resultado').innerHTML =
+    `<div class="ai-error-box">⚠️ ${msg}</div>`;
 }
 
-const PROMPT_LEADS = `Você é um assistente de CRM. Analise o texto/imagem abaixo e extraia TODOS os leads/contatos mencionados.
+const PROMPT_LEADS = `Você é um assistente de CRM. Analise o conteúdo abaixo e extraia TODOS os leads/contatos mencionados.
 Para cada lead, retorne um JSON array com objetos no formato:
 {"nome":"","whatsapp":"","email":"","empresa":"","interesse":"","obs":""}
 - whatsapp: apenas dígitos, com DDI (55 para Brasil) + DDD + número. Se não tiver, deixe vazio.
 - interesse: resumo curto do que a pessoa quer/precisa
 - Se um campo não estiver disponível, deixe como string vazia.
-Retorne APENAS o JSON array, sem markdown, sem explicações.`;
+Retorne APENAS o JSON array, sem markdown, sem explicações, sem texto extra.`;
+
+async function chamarGemini(parts) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    showCapturaError('Configure a chave da API Gemini antes de continuar.');
+    return null;
+  }
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts }],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
+    })
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(()=>({}));
+    const msg = err?.error?.message || 'HTTP ' + resp.status;
+    showCapturaError('Erro da API Gemini: ' + msg);
+    return null;
+  }
+  const data = await resp.json();
+  return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+}
 
 async function extrairLeadsTexto() {
-  const apiKey = getApiKey();
-  if (!apiKey) return showCapturaError('Configure a chave da API Claude acima antes de continuar.');
   const texto = document.getElementById('captura-texto').value.trim();
-  if (!texto)  return showToast('⚠️ Cole o texto antes','warn');
-
-  showCapturaLoading('Analisando mensagem…');
-
+  if (!texto) return showToast('⚠️ Cole o texto antes', 'warn');
+  showCapturaLoading('Analisando mensagem com Gemini…');
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type':    'application/json',
-        'x-api-key':       apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2000,
-        messages: [{
-          role: 'user',
-          content: PROMPT_LEADS + '\n\nTexto:\n' + texto
-        }]
-      })
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(()=>({}));
-      return showCapturaError(`Erro da API: ${err.error?.message || resp.status}`);
-    }
-
-    const data = await resp.json();
-    const raw  = data.content?.[0]?.text || '';
-    processarResultadoIA(raw);
+    const raw = await chamarGemini([{ text: PROMPT_LEADS + '\n\nTexto:\n' + texto }]);
+    if (raw !== null) processarResultadoIA(raw);
   } catch(e) {
-    showCapturaError('Falha na conexão com a API. Verifique sua chave e conexão.');
+    showCapturaError('Falha na conexão. Verifique sua chave e conexão com internet.');
   }
 }
 
 async function extrairLeadsImagem() {
-  const apiKey = getApiKey();
-  if (!apiKey)              return showCapturaError('Configure a chave da API Claude acima.');
-  if (!capturaImagemBase64) return showToast('⚠️ Selecione uma imagem','warn');
-
-  showCapturaLoading('Analisando print do WhatsApp…');
-
+  if (!capturaImagemBase64) return showToast('⚠️ Selecione uma imagem', 'warn');
+  showCapturaLoading('Analisando print com Gemini Vision…');
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type':    'application/json',
-        'x-api-key':       apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 2000,
-        messages: [{
-          role: 'user',
-          content: [
-            { type:'image', source:{ type:'base64', media_type: capturaImagemType, data: capturaImagemBase64 } },
-            { type:'text',  text: PROMPT_LEADS }
-          ]
-        }]
-      })
-    });
-
-    if (!resp.ok) {
-      const err = await resp.json().catch(()=>({}));
-      return showCapturaError(`Erro da API: ${err.error?.message || resp.status}`);
-    }
-
-    const data = await resp.json();
-    const raw  = data.content?.[0]?.text || '';
-    processarResultadoIA(raw);
+    const raw = await chamarGemini([
+      { text: PROMPT_LEADS },
+      { inline_data: { mime_type: capturaImagemType, data: capturaImagemBase64 } }
+    ]);
+    if (raw !== null) processarResultadoIA(raw);
   } catch(e) {
-    showCapturaError('Falha na conexão com a API.');
+    showCapturaError('Falha ao analisar a imagem. Tente novamente.');
   }
 }
 
 function processarResultadoIA(raw) {
   let leads = [];
   try {
-    const clean = raw.replace(/```json|```/g,'').trim();
-    leads = JSON.parse(clean);
+    // Remove markdown fences and extra text before/after JSON
+    const clean = raw.replace(/```json|```/gi, '').trim();
+    // Find JSON array in response
+    const match = clean.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('no array');
+    leads = JSON.parse(match[0]);
     if (!Array.isArray(leads)) leads = [leads];
   } catch {
-    return showCapturaError('A IA não retornou um formato válido. Tente novamente ou reformule o texto.');
+    return showCapturaError('A IA não retornou dados válidos. Tente com um texto mais detalhado ou uma imagem mais clara.');
   }
 
   if (!leads.length) {
@@ -1932,13 +1902,12 @@ function processarResultadoIA(raw) {
     return;
   }
 
-  // Render review cards
   const html = `
     <div style="margin-bottom:10px">
       <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;margin-bottom:4px">
         🎉 ${leads.length} lead${leads.length!==1?'s':''} encontrado${leads.length!==1?'s':''}
       </div>
-      <div style="font-size:.75rem;color:var(--muted)">Revise os dados e clique em "Importar Selecionados"</div>
+      <div style="font-size:.75rem;color:var(--muted)">Revise e clique em "Importar Selecionados"</div>
     </div>
     <div class="leads-extraidos" id="leads-cards">
       ${leads.map((l,i) => renderLeadCard(l,i)).join('')}
@@ -1949,7 +1918,6 @@ function processarResultadoIA(raw) {
     </div>`;
 
   document.getElementById('captura-resultado').innerHTML = html;
-  // store leads in memory for import
   window._leadsExtraidos = leads;
 }
 
@@ -1962,26 +1930,11 @@ function renderLeadCard(l, i) {
       </label>
     </div>
     <div class="lead-fields">
-      <div class="lead-field">
-        <label>Nome</label>
-        <input type="text" id="lf-nome-${i}" value="${escHtml(l.nome||'')}">
-      </div>
-      <div class="lead-field">
-        <label>WhatsApp</label>
-        <input type="tel" id="lf-wa-${i}" value="${escHtml(l.whatsapp||'')}">
-      </div>
-      <div class="lead-field">
-        <label>E-mail</label>
-        <input type="email" id="lf-email-${i}" value="${escHtml(l.email||'')}">
-      </div>
-      <div class="lead-field">
-        <label>Empresa</label>
-        <input type="text" id="lf-empresa-${i}" value="${escHtml(l.empresa||'')}">
-      </div>
-      <div class="lead-field lead-full">
-        <label>Interesse / Observações</label>
-        <input type="text" id="lf-obs-${i}" value="${escHtml((l.interesse||'')+(l.obs?' — '+l.obs:''))}">
-      </div>
+      <div class="lead-field"><label>Nome</label><input type="text" id="lf-nome-${i}" value="${escHtml(l.nome||'')}"></div>
+      <div class="lead-field"><label>WhatsApp</label><input type="tel" id="lf-wa-${i}" value="${escHtml(l.whatsapp||'')}"></div>
+      <div class="lead-field"><label>E-mail</label><input type="email" id="lf-email-${i}" value="${escHtml(l.email||'')}"></div>
+      <div class="lead-field"><label>Empresa</label><input type="text" id="lf-empresa-${i}" value="${escHtml(l.empresa||'')}"></div>
+      <div class="lead-field lead-full"><label>Interesse / Obs</label><input type="text" id="lf-obs-${i}" value="${escHtml((l.interesse||'')+(l.obs?' — '+l.obs:''))}"></div>
     </div>
   </div>`;
 }
