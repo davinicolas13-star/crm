@@ -1777,6 +1777,67 @@ async function testarChave() {
   btn.textContent = orig; btn.disabled = false;
 }
 
+function switchCapturaTab(tab, btn) {
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.captura-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('cpanel-'+tab).classList.add('active');
+}
+
+function carregarImagem(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    capturaImagemBase64 = e.target.result.split(',')[1];
+    capturaImagemType   = file.type;
+    document.getElementById('img-preview-src').src = e.target.result;
+    document.getElementById('img-preview').style.display = 'block';
+    document.getElementById('img-drop').style.display = 'none';
+    document.getElementById('btn-extrair-img').disabled = false;
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleImgDrop(e) {
+  e.preventDefault();
+  document.getElementById('img-drop').classList.remove('over');
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.type.startsWith('image/')) return showToast('⚠️ Envie uma imagem','warn');
+  carregarImagem({files:[file]});
+}
+
+function removerImagem() {
+  capturaImagemBase64 = null; capturaImagemType = null;
+  document.getElementById('img-preview').style.display = 'none';
+  document.getElementById('img-drop').style.display = 'block';
+  document.getElementById('btn-extrair-img').disabled = true;
+  document.getElementById('img-file-input').value = '';
+}
+
+function getApiKey() {
+  const fromInput = document.getElementById('ai-api-key')?.value || '';
+  const fromStorage = localStorage.getItem('crm_ai_key') || '';
+  return limparChave(fromInput || fromStorage);
+}
+
+function showCapturaLoading(msg) {
+  document.getElementById('captura-resultado').innerHTML =
+    '<div class="ai-loading"><div class="ai-spinner"></div>' + msg + '</div>';
+}
+
+function showCapturaError(msg) {
+  document.getElementById('captura-resultado').innerHTML =
+    '<div class="ai-error-box">⚠️ ' + msg + '</div>';
+}
+
+const PROMPT_LEADS = `Você é um assistente de CRM. Analise o conteúdo abaixo e extraia TODOS os leads/contatos mencionados.
+Para cada lead, retorne um JSON array com objetos no formato:
+{"nome":"","whatsapp":"","email":"","empresa":"","interesse":"","obs":""}
+- whatsapp: apenas dígitos, com DDI (55 para Brasil) + DDD + número. Se não tiver, deixe vazio.
+- interesse: resumo curto do que a pessoa quer/precisa
+- Se um campo não estiver disponível, deixe como string vazia.
+Retorne APENAS o JSON array, sem markdown, sem explicações, sem texto extra.`;
+
 async function chamarOpenRouter(messages) {
   const apiKey = getApiKey();
   if (!apiKey) {
