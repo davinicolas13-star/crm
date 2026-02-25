@@ -4,7 +4,7 @@
 //      fizer um deploy novo (ex: v5, v6, v7...)
 //      Isso força o celular a baixar tudo de novo.
 // ─────────────────────────────────────────────
-const CACHE_VERSION = 'crm-v7';
+const CACHE_VERSION = 'crm-v8';
 const CACHE_STATIC  = `${CACHE_VERSION}-static`;
 
 // Arquivos que ficam em cache offline
