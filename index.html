@@ -1756,7 +1756,7 @@ async function testarChave() {
         'X-Title': 'CRM Pro'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-3.5-turbo',
+        model: 'mistralai/mistral-7b-instruct',
         max_tokens: 2048,
         temperature: 0.1,
         messages: [{ role: 'user', content: 'ok' }]
@@ -1842,7 +1842,7 @@ Retorne APENAS o JSON array, sem markdown, sem explicações, sem texto extra.`;
 async function chamarOpenRouter(messages) {
   const apiKey = getApiKey();
   if (!apiKey) {
-    showCapturaError('Configure a chave da API OpenRouter.\nAcesse openrouter.ai/keys para obter grátis.');
+    showCapturaError('Configure a chave da API OpenRouter. Acesse openrouter.ai/keys para obter gr�tis.');
     return null;
   }
   const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -1854,7 +1854,7 @@ async function chamarOpenRouter(messages) {
       'X-Title': 'CRM Pro'
     },
     body: JSON.stringify({
-      model: 'meta-llama/llama-3.3-70b-instruct:free',
+      model: 'openai/gpt-3.5-turbo',
       max_tokens: 2048,
       temperature: 0.1,
       messages
