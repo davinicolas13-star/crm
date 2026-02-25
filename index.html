@@ -2213,6 +2213,17 @@ function fazerLogout() {
 
 /* ═══ INIT ═══ */
 updateStats(); renderList(); atualizarAgendaDot();
+
+  function notificarEvento(titulo, data) {
+    if (!("Notification" in window)) return;
+
+    if (Notification.permission === "granted") {
+      new Notification("?? Lembrete CRM", {
+        body: titulo + " - " + data,
+        icon: "icon.png"
+      });
+    }
+  }
 </script>
 </body>
 </html>
